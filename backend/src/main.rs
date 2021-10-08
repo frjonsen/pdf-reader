@@ -8,6 +8,7 @@ async fn list_documents() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    println!("Launching backend");
     HttpServer::new(|| App::new().service(web::scope("/api").service(list_documents)))
         .bind("0.0.0.0:8080")?
         .run()
