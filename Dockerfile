@@ -16,5 +16,6 @@ COPY --from=backendbuilder  /backend/target/release/pdf-reader /bin/pdf-reader
 RUN mkdir /workdir
 COPY deploy/entrypoint.sh /workdir
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY /deploy/dummy.pdf /root
 WORKDIR /workdir
 CMD ["./entrypoint.sh"]
