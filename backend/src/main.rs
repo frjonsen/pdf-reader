@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 #[get("documents")]
 async fn list_documents() -> impl Responder {
-    let files = vec!["adocument.pdf"];
+    let files = vec!["adocument.pdf", "seconddocument.pdf"];
     HttpResponse::Ok().json(files)
 }
 
