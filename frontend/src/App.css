@@ -13,8 +13,8 @@
   }
 }
 
-#pdfList {
-  float: left;
+#documentViewer {
+  border: 1px solid black;
 }
 
 .App-header {
