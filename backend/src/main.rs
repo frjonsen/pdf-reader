@@ -15,7 +15,15 @@ async fn health_check() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     println!("Launching backend");
 
-    let configuration = configuration::get_configuration().expect("Failed to read configuration");
+    let configuration = configuration::get_configuration();
+
+    let documents_path = configuration.documents_storage_path();
+
+    if !std::path::Path::exists(&documents_path) {
+        println!("Path {:?} did not exist. Creating it now", &documents_path);
+        tokio::fs::create_dir_all(documents_path).await.unwrap();
+    }
+
     let db_pool = database::get_connection_pool(&configuration);
     sqlx::migrate!()
         .run(&db_pool)
