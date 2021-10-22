@@ -4,7 +4,6 @@ use actix_files::NamedFile;
 use actix_multipart::Multipart;
 use actix_web::Result as AWResult;
 use actix_web::{web, HttpResponse, Responder, Scope};
-use chrono::Utc;
 use futures::StreamExt;
 use futures::TryStreamExt;
 use sqlx::SqlitePool;
@@ -46,14 +45,33 @@ pub async fn save_document_to_disk(
     Ok(Document {
         id: id.clone(),
         name: filename,
+        added_on: chrono::Utc::now().naive_utc(),
     })
 }
-async fn list_documents() -> impl Responder {
-    let files = vec![Document {
-        id: Uuid::new_v4(),
-        name: "adocument.pdf".to_owned(),
-    }];
-    HttpResponse::Ok().json(files)
+async fn list_documents(pool: web::Data<SqlitePool>) -> impl Responder {
+    let rows = sqlx::query!("SELECT id, name, added_on FROM Documents")
+        .fetch_all(pool.get_ref())
+        .await
+        .map_err(|e| {
+            println!("{}", e);
+            HttpResponse::InternalServerError().body("Failed to fetch documents")
+        });
+
+    let rows = match rows {
+        Err(e) => return e,
+        Ok(r) => r,
+    };
+
+    let rows = rows
+        .into_iter()
+        .map(|d| Document {
+            id: Uuid::from_str(&d.id).unwrap(),
+            added_on: d.added_on,
+            name: d.name,
+        })
+        .collect::<Vec<_>>();
+
+    HttpResponse::Ok().json(rows)
 }
 
 fn delete_documents(document_ids: &[Uuid]) {
@@ -101,7 +119,7 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
         let id = uuid::Uuid::new_v4();
         if let Ok(f) = save_document_to_disk(&id, &mut field).await {
             println!("Saving file {} in database", f.name);
-            let now = Utc::now();
+            let id = id.to_hyphenated();
             sqlx::query!(
                 r#"
                 INSERT INTO Documents (id, name, added_on)
@@ -109,7 +127,7 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
                 "#,
                 id,
                 f.name,
-                now
+                f.added_on
             )
             .execute(&mut tx)
             .await
