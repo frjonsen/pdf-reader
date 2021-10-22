@@ -56,6 +56,36 @@ async fn list_documents() -> impl Responder {
     HttpResponse::Ok().json(files)
 }
 
+fn delete_documents(document_ids: &[Uuid]) {
+    let documents_path = get_configuration().documents_storage_path();
+    let documents_on_disk = match std::fs::read_dir(documents_path) {
+        Err(e) => {
+            println!("Failed to read documents directory {}", e);
+            return;
+        }
+        Ok(r) => r,
+    };
+
+    let ids = document_ids.iter().map(Uuid::to_string).collect::<Vec<_>>();
+
+    let to_delete = documents_on_disk.filter_map(Result::ok).filter(|f| {
+        let file_name = f.file_name();
+        let lossy = file_name.to_string_lossy();
+        ids.iter().any(|i| lossy.starts_with(i))
+    });
+
+    let failed_deletes = to_delete
+        .map(|f| std::fs::remove_file(f.path()))
+        .filter(Result::is_err)
+        .map(Result::err)
+        .filter(Option::is_some)
+        .collect::<Vec<_>>();
+
+    for failed in failed_deletes {
+        println!("Failed to delete: {}", failed.unwrap());
+    }
+}
+
 async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) -> impl Responder {
     println!("Handling incoming documents");
     let mut saved: Vec<Uuid> = Vec::new();
@@ -87,15 +117,21 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
             saved.push(f.id);
         } else {
             println!("Failed to store file");
+            if saved.len() > 0 {
+                delete_documents(&saved);
+            }
+            return HttpResponse::InternalServerError().body("Failed to commit transaction");
         }
     }
 
-    match tx.commit().await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(e) => {
-            println!("{}", e);
-            HttpResponse::InternalServerError().body("Failed to commit transaction")
+    if let Err(e) = tx.commit().await {
+        println!("{}", e);
+        if saved.len() > 0 {
+            delete_documents(&saved);
         }
+        HttpResponse::InternalServerError().body("Failed to commit transaction")
+    } else {
+        HttpResponse::Ok().finish()
     }
 }
 
