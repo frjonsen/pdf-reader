@@ -3,6 +3,7 @@ use std::path::PathBuf;
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub storage_location: PathBuf,
+    pub port: u16,
 }
 
 impl Settings {
@@ -16,6 +17,10 @@ pub fn get_configuration() -> Settings {
     settings
         .set_default("storage_location", "/pdf_reader")
         .expect("Failed to set default for storage location");
+
+    settings
+        .set_default("port", 8080)
+        .expect("Failed to set default for port number");
 
     settings
         .merge(config::Environment::with_prefix("PDF_READER"))

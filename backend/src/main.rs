@@ -1,5 +1,7 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use sqlx;
+use std::net::TcpListener;
+
+use actix_web::{dev::Server, get, web, App, HttpResponse, HttpServer, Responder};
+use sqlx::{self, Pool, Sqlite};
 
 mod configuration;
 mod database;
@@ -9,6 +11,24 @@ mod models;
 #[get("health_check")]
 async fn health_check() -> impl Responder {
     HttpResponse::Ok()
+}
+
+pub fn run(listener: TcpListener, db_pool: Pool<Sqlite>) -> Result<Server, std::io::Error> {
+    let db_pool = web::Data::new(db_pool);
+    println!("Starting listen on {}", listener.local_addr().unwrap());
+    let server = HttpServer::new(move || {
+        App::new()
+            .service(
+                web::scope("/api")
+                    .service(documents::setup_documents_service())
+                    .service(health_check),
+            )
+            .app_data(db_pool.clone())
+    })
+    .listen(listener)?
+    .run();
+
+    Ok(server)
 }
 
 #[actix_web::main]
@@ -29,18 +49,12 @@ async fn main() -> std::io::Result<()> {
         .run(&db_pool)
         .await
         .expect("Failed to run migration");
-    let db_pool = web::Data::new(db_pool);
 
-    HttpServer::new(move || {
-        App::new()
-            .service(
-                web::scope("/api")
-                    .service(documents::setup_documents_service())
-                    .service(health_check),
-            )
-            .app_data(db_pool.clone())
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    let adress_binding = format!("0.0.0.0:{}", configuration.port);
+
+    let listener = TcpListener::bind(adress_binding)?;
+
+    let server = run(listener, db_pool)?;
+
+    server.await
 }
