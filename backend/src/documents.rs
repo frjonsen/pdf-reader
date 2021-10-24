@@ -4,42 +4,39 @@ use actix_files::NamedFile;
 use actix_multipart::Multipart;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::Result as AWResult;
-use actix_web::{error, web, HttpResponse, Responder, Scope};
+use actix_web::{error, web, HttpResponse, Scope};
 use futures::StreamExt;
 use futures::TryStreamExt;
 use sqlx::SqlitePool;
-use std::str::FromStr;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
 pub async fn save_document_to_disk(
     id: &Uuid,
     field: &mut actix_multipart::Field,
-) -> Result<Document, String> {
+) -> AWResult<Document> {
     let base_path = get_configuration().documents_storage_path();
-    let mut file_path = base_path.join(id.to_string());
-    file_path.set_extension("pdf");
+    let file_path = base_path.join(id.to_string()).with_extension("pdf");
 
     let mut fd = tokio::fs::File::create(file_path)
         .await
-        .map_err(|_| "Failed to create file")?;
+        .map_err(|_| error::ErrorBadRequest("Failed to create file"))?;
 
-    let content_disposition = field
+    let filename = field
         .content_disposition()
-        .ok_or_else(|| "File missing content disposition")?;
-
-    let filename = content_disposition
+        .ok_or_else(|| error::ErrorBadRequest("File missing content disposition"))?
         .get_filename()
-        .ok_or_else(|| "File must have a filename")?
+        .ok_or_else(|| error::ErrorBadRequest("File must have a filename"))?
         .to_owned();
 
     println!("Writing file {} to disk", filename);
 
     while let Some(chunk) = field.next().await {
-        let chunk = chunk.map_err(|_| "Failed to read file chunk")?;
+        let chunk =
+            chunk.map_err(|_| error::ErrorInternalServerError("Failed to read file chunk"))?;
         fd.write_all(&chunk)
             .await
-            .map_err(|_| "Failed to write chunk to storage")?;
+            .map_err(|_| error::ErrorInternalServerError("Failed to write chunk to storage"))?;
     }
 
     Ok(Document {
@@ -48,30 +45,17 @@ pub async fn save_document_to_disk(
         added_on: chrono::Utc::now().naive_utc(),
     })
 }
-async fn list_documents(pool: web::Data<SqlitePool>) -> impl Responder {
-    let rows = sqlx::query!("SELECT id, name, added_on FROM Documents")
+
+async fn list_documents(pool: web::Data<SqlitePool>) -> AWResult<HttpResponse> {
+    let rows: Vec<Document> = sqlx::query_as("SELECT id, name, added_on FROM Documents")
         .fetch_all(pool.get_ref())
         .await
         .map_err(|e| {
             println!("{}", e);
-            HttpResponse::InternalServerError().body("Failed to fetch documents")
-        });
+            error::ErrorInternalServerError("Failed to fetch documents")
+        })?;
 
-    let rows = match rows {
-        Err(e) => return e,
-        Ok(r) => r,
-    };
-
-    let rows = rows
-        .into_iter()
-        .map(|d| Document {
-            id: Uuid::from_str(&d.id).unwrap(),
-            added_on: d.added_on,
-            name: d.name,
-        })
-        .collect::<Vec<_>>();
-
-    HttpResponse::Ok().json(rows)
+    Ok(HttpResponse::Ok().json(rows))
 }
 
 fn delete_documents(document_ids: &[Uuid]) {
@@ -104,16 +88,16 @@ fn delete_documents(document_ids: &[Uuid]) {
     }
 }
 
-async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) -> impl Responder {
+async fn upload_document(
+    pool: web::Data<SqlitePool>,
+    mut payload: Multipart,
+) -> AWResult<HttpResponse> {
     println!("Handling incoming documents");
     let mut saved: Vec<Uuid> = Vec::new();
-    let mut tx = match pool.begin().await {
-        Ok(t) => t,
-        Err(e) => {
-            println!("{}", e);
-            return HttpResponse::InternalServerError().body("Failed to begin transaction");
-        }
-    };
+    let mut tx = pool.begin().await.map_err(|e| {
+        println!("{}", e);
+        error::ErrorInternalServerError("Failed to begin transaction")
+    })?;
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let id = uuid::Uuid::new_v4();
@@ -138,7 +122,9 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
             if saved.len() > 0 {
                 delete_documents(&saved);
             }
-            return HttpResponse::InternalServerError().body("Failed to commit transaction");
+            Err(error::ErrorInternalServerError(
+                "Failed to store file on disk",
+            ))?;
         }
     }
 
@@ -147,9 +133,11 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
         if saved.len() > 0 {
             delete_documents(&saved);
         }
-        HttpResponse::InternalServerError().body("Failed to commit transaction")
+        Err(error::ErrorInternalServerError(
+            "Failed to commit transaction",
+        ))
     } else {
-        HttpResponse::Ok().finish()
+        Ok(HttpResponse::NoContent().finish())
     }
 }
 
