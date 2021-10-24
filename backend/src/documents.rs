@@ -40,7 +40,7 @@ pub async fn save_document_to_disk(
     }
 
     Ok(Document {
-        id: id.clone(),
+        id: *id,
         name: filename,
         added_on: chrono::Utc::now().naive_utc(),
     })
@@ -119,18 +119,18 @@ async fn upload_document(
             saved.push(f.id);
         } else {
             println!("Failed to store file");
-            if saved.len() > 0 {
+            if !saved.is_empty() {
                 delete_documents(&saved);
             }
-            Err(error::ErrorInternalServerError(
+            return Err(error::ErrorInternalServerError(
                 "Failed to store file on disk",
-            ))?;
+            ));
         }
     }
 
     if let Err(e) = tx.commit().await {
         println!("{}", e);
-        if saved.len() > 0 {
+        if !saved.is_empty() {
             delete_documents(&saved);
         }
         Err(error::ErrorInternalServerError(
