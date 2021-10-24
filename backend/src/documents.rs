@@ -2,12 +2,12 @@ use crate::configuration::get_configuration;
 use crate::models::Document;
 use actix_files::NamedFile;
 use actix_multipart::Multipart;
+use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::Result as AWResult;
-use actix_web::{web, HttpResponse, Responder, Scope};
+use actix_web::{error, web, HttpResponse, Responder, Scope};
 use futures::StreamExt;
 use futures::TryStreamExt;
 use sqlx::SqlitePool;
-use std::path::PathBuf;
 use std::str::FromStr;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
@@ -153,9 +153,33 @@ async fn upload_document(pool: web::Data<SqlitePool>, mut payload: Multipart) ->
     }
 }
 
-async fn get_document(id: web::Path<String>) -> AWResult<NamedFile> {
-    let path = PathBuf::from_str("../deploy/pdf.pdf")?;
-    Ok(NamedFile::open(path)?)
+async fn get_document(pool: web::Data<SqlitePool>, id: web::Path<Uuid>) -> AWResult<NamedFile> {
+    let config = get_configuration();
+    println!("Looking up file {}", id);
+    let document: Document =
+        sqlx::query_as("SELECT id, name, added_on FROM Documents WHERE id = $1")
+            .bind(*id)
+            .fetch_optional(pool.get_ref())
+            .await
+            .map_err(|_| error::ErrorInternalServerError("Failed to make query"))?
+            .ok_or_else(|| error::ErrorNotFound("Not found"))?;
+
+    let path = config
+        .documents_storage_path()
+        .join(id.to_string())
+        .with_extension("pdf");
+    println!("Reading file from {:?}", path);
+    let file = NamedFile::open(path)
+        .map_err(|_| error::ErrorInternalServerError("Unable to read file from disk"))?;
+
+    let cd = format!("attachment; filename=\"{}\"", document.name);
+    let cd = ContentDisposition {
+        parameters: vec![DispositionParam::Filename(cd)],
+        disposition: DispositionType::Attachment,
+    };
+    let file = file.set_content_disposition(cd);
+
+    Ok(file)
 }
 
 pub fn setup_documents_service() -> Scope {
