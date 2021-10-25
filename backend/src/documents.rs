@@ -78,13 +78,11 @@ fn delete_documents(document_ids: &[Uuid]) {
 
     let failed_deletes = to_delete
         .map(|f| std::fs::remove_file(f.path()))
-        .filter(Result::is_err)
-        .map(Result::err)
-        .filter(Option::is_some)
+        .filter_map(Result::err)
         .collect::<Vec<_>>();
 
     for failed in failed_deletes {
-        println!("Failed to delete: {}", failed.unwrap());
+        println!("Failed to delete: {}", failed);
     }
 }
 
@@ -142,17 +140,19 @@ async fn upload_document(
 }
 
 async fn get_document(pool: web::Data<SqlitePool>, id: web::Path<Uuid>) -> AWResult<NamedFile> {
-    let config = get_configuration();
     println!("Looking up file {}", id);
     let document: Document =
         sqlx::query_as("SELECT id, name, added_on FROM Documents WHERE id = $1")
-            .bind(*id)
+            .bind(id.to_string())
             .fetch_optional(pool.get_ref())
             .await
-            .map_err(|_| error::ErrorInternalServerError("Failed to make query"))?
+            .map_err(|e| {
+                println!("{}", e);
+                error::ErrorInternalServerError("Failed to make query")
+            })?
             .ok_or_else(|| error::ErrorNotFound("Not found"))?;
 
-    let path = config
+    let path = get_configuration()
         .documents_storage_path()
         .join(id.to_string())
         .with_extension("pdf");

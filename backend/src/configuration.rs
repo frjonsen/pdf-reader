@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
+    pub connection_string: Option<String>,
     pub storage_location: PathBuf,
     pub port: u16,
 }
@@ -9,6 +10,15 @@ pub struct Settings {
 impl Settings {
     pub fn documents_storage_path(&self) -> PathBuf {
         get_configuration().storage_location.join("documents")
+    }
+
+    pub fn get_connection_string(&self) -> String {
+        self.connection_string.clone().unwrap_or_else(|| {
+            self.storage_location
+                .join("database.db")
+                .to_string_lossy()
+                .to_string()
+        })
     }
 }
 

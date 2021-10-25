@@ -1,13 +1,21 @@
 use crate::configuration::Settings;
-use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, SqlitePool};
 use std::str::FromStr;
 
 pub fn get_connection_pool(settings: &Settings) -> SqlitePool {
-    let database_path_buf = settings.storage_location.join("database.db");
+    let connection_string = settings.get_connection_string();
 
-    let options = SqliteConnectOptions::from_str(&database_path_buf.to_string_lossy())
+    let mut options = SqliteConnectOptions::from_str(&connection_string)
         .expect("Failed to parse database url")
         .create_if_missing(true);
+    options.log_statements(log::LevelFilter::Debug);
 
     SqlitePool::connect_lazy_with(options)
+}
+
+pub async fn initialize_database(pool: &SqlitePool) {
+    sqlx::migrate!()
+        .run(pool)
+        .await
+        .expect("Failed to run migration");
 }
