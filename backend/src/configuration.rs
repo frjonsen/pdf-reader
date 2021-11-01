@@ -9,7 +9,7 @@ pub struct Settings {
 
 impl Settings {
     pub fn documents_storage_path(&self) -> PathBuf {
-        get_configuration().storage_location.join("documents")
+        self.storage_location.join("documents")
     }
 
     pub fn get_connection_string(&self) -> String {

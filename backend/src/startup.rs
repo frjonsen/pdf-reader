@@ -16,8 +16,13 @@ async fn health_check() -> impl Responder {
     HttpResponse::Ok()
 }
 
-pub fn run(listener: TcpListener, db_pool: Pool<Sqlite>) -> Result<Server, std::io::Error> {
+pub fn run(
+    listener: TcpListener,
+    db_pool: Pool<Sqlite>,
+    configuration: Settings,
+) -> Result<Server, std::io::Error> {
     let db_pool = web::Data::new(db_pool);
+    let config = web::Data::new(configuration);
     println!("Starting listen on {}", listener.local_addr().unwrap());
     let server = HttpServer::new(move || {
         App::new()
@@ -27,6 +32,7 @@ pub fn run(listener: TcpListener, db_pool: Pool<Sqlite>) -> Result<Server, std::
                     .service(health_check),
             )
             .app_data(db_pool.clone())
+            .app_data(config.clone())
     })
     .listen(listener)?
     .run();
@@ -34,19 +40,32 @@ pub fn run(listener: TcpListener, db_pool: Pool<Sqlite>) -> Result<Server, std::
     Ok(server)
 }
 impl Application {
-    pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
-        let connection_pool = database::get_connection_pool(&configuration);
+    pub async fn build(
+        configuration: Settings,
+        db_pool: Option<Pool<Sqlite>>,
+    ) -> Result<Self, std::io::Error> {
+        Application::ensure_storage_path(&configuration).await;
+        let connection_pool =
+            db_pool.unwrap_or_else(|| database::get_connection_pool(&configuration));
         database::initialize_database(&connection_pool).await;
 
         let adress_binding = format!("0.0.0.0:{}", configuration.port);
         let listener = TcpListener::bind(adress_binding)?;
         let port = listener.local_addr().unwrap().port();
-        let server = run(listener, connection_pool)?;
+        let server = run(listener, connection_pool, configuration)?;
 
         Ok(Self { server, port })
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         self.server.await
+    }
+
+    pub async fn ensure_storage_path(configuration: &Settings) {
+        let documents_path = configuration.documents_storage_path();
+        if !std::path::Path::exists(&documents_path) {
+            println!("Path {:?} did not exist. Creating it now", &documents_path);
+            tokio::fs::create_dir_all(documents_path).await.unwrap();
+        }
     }
 }
