@@ -7,7 +7,7 @@ use actix_web::Result as AWResult;
 use actix_web::{error, web, HttpResponse, Scope};
 use futures::StreamExt;
 use futures::TryStreamExt;
-use sqlx::SqlitePool;
+use sqlx::PgPool;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
@@ -43,12 +43,12 @@ pub async fn save_document_to_disk(
     Ok(Document {
         id: *id,
         name: filename,
-        added_on: chrono::Utc::now().naive_utc(),
+        added_on: chrono::Utc::now(),
     })
 }
 
-async fn list_documents(pool: web::Data<SqlitePool>) -> AWResult<HttpResponse> {
-    let rows: Vec<Document> = sqlx::query_as("SELECT id, name, added_on FROM Documents")
+async fn list_documents(pool: web::Data<PgPool>) -> AWResult<HttpResponse> {
+    let rows: Vec<Document> = sqlx::query_as!(Document, "SELECT * FROM Documents")
         .fetch_all(pool.get_ref())
         .await
         .map_err(|e| {
@@ -88,7 +88,7 @@ fn delete_documents(document_ids: &[Uuid], config: &Settings) {
 }
 
 async fn upload_document(
-    pool: web::Data<SqlitePool>,
+    pool: web::Data<PgPool>,
     config: web::Data<Settings>,
     mut payload: Multipart,
 ) -> AWResult<HttpResponse> {
@@ -104,16 +104,12 @@ async fn upload_document(
         match save_document_to_disk(&id, &mut field, config.get_ref()).await {
             Ok(f) => {
                 println!("Saving file {} in database", f.name);
-                let id = id.to_hyphenated();
-                sqlx::query(
-                    r#"
-                INSERT INTO Documents (id, name, added_on)
-                VALUES ($1, $2, $3)
-                "#,
+                sqlx::query!(
+                    "INSERT INTO Documents (id, name, added_on) VALUES ($1, $2, $3)",
+                    id,
+                    f.name,
+                    f.added_on
                 )
-                .bind(id)
-                .bind(f.name)
-                .bind(f.added_on)
                 .execute(&mut tx)
                 .await
                 .unwrap();
@@ -143,7 +139,7 @@ async fn upload_document(
 }
 
 async fn get_document(
-    pool: web::Data<SqlitePool>,
+    pool: web::Data<PgPool>,
     config: web::Data<Settings>,
     id: web::Path<Uuid>,
 ) -> AWResult<NamedFile> {

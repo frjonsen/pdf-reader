@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
-    pub connection_string: Option<String>,
+    pub database_location: Option<String>,
+    pub database_name: Option<String>,
     pub storage_location: PathBuf,
     pub port: u16,
 }
@@ -12,13 +13,16 @@ impl Settings {
         self.storage_location.join("documents")
     }
 
-    pub fn get_connection_string(&self) -> String {
-        self.connection_string.clone().unwrap_or_else(|| {
-            self.storage_location
-                .join("database.db")
-                .to_string_lossy()
-                .to_string()
-        })
+    pub fn get_database_location(&self) -> String {
+        self.database_location
+            .clone()
+            .unwrap_or_else(|| "postgres://postgres:password@localhost:5432".to_owned())
+    }
+
+    pub fn get_connection_string_with_db(&self) -> String {
+        let location = self.get_database_location();
+        let database_name = self.database_name.clone().unwrap_or("pdfreader".to_owned());
+        format!("{}/{}", location, database_name)
     }
 }
 

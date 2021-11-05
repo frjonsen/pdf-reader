@@ -1,5 +1,5 @@
 CREATE TABLE Documents (
-    id BLOB PRIMARY KEY NOT NULL,
+    id uuid PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
-    added_on datetime NOT NULL
+    added_on timestamptz NOT NULL
 )

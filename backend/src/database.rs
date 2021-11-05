@@ -1,19 +1,17 @@
 use crate::configuration::Settings;
-use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, SqlitePool};
+use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use std::str::FromStr;
 
-pub fn get_connection_pool(settings: &Settings) -> SqlitePool {
-    let connection_string = settings.get_connection_string();
-
-    let mut options = SqliteConnectOptions::from_str(&connection_string)
-        .expect("Failed to parse database url")
-        .create_if_missing(true);
+pub fn get_connection_pool(settings: &Settings) -> PgPool {
+    let connection_string = settings.get_connection_string_with_db();
+    let mut options =
+        PgConnectOptions::from_str(&connection_string).expect("Failed to parse database url");
     options.log_statements(log::LevelFilter::Debug);
 
-    SqlitePool::connect_lazy_with(options)
+    PgPool::connect_lazy_with(options)
 }
 
-pub async fn initialize_database(pool: &SqlitePool) {
+pub async fn initialize_database(pool: &PgPool) {
     sqlx::migrate!()
         .run(pool)
         .await

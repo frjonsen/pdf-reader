@@ -1,0 +1,47 @@
+{
+  "db": "PostgreSQL",
+  "9e6eb508cb6e53c29bd10966f3e33da399bf18691fe33b8c0f107aff5040d117": {
+    "query": "INSERT INTO Documents (id, name, added_on) VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Timestamptz"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "cd162816d775a9bcb0860012889ce9a929331cb4a30fe82f48bae2a8a8756760": {
+    "query": "SELECT * FROM Documents",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "added_on",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  }
+}

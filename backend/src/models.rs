@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -6,5 +6,5 @@ use uuid::Uuid;
 pub struct Document {
     pub id: Uuid,
     pub name: String,
-    pub added_on: NaiveDateTime,
+    pub added_on: DateTime<Utc>,
 }

@@ -4,8 +4,7 @@ use crate::configuration::Settings;
 use crate::database;
 use crate::documents;
 use actix_web::{dev::Server, get, web, App, HttpResponse, HttpServer, Responder};
-use sqlx::{Pool, Sqlite};
-
+use sqlx::PgPool;
 pub struct Application {
     pub port: u16,
     pub server: Server,
@@ -18,7 +17,7 @@ async fn health_check() -> impl Responder {
 
 pub fn run(
     listener: TcpListener,
-    db_pool: Pool<Sqlite>,
+    db_pool: PgPool,
     configuration: Settings,
 ) -> Result<Server, std::io::Error> {
     let db_pool = web::Data::new(db_pool);
@@ -42,7 +41,7 @@ pub fn run(
 impl Application {
     pub async fn build(
         configuration: Settings,
-        db_pool: Option<Pool<Sqlite>>,
+        db_pool: Option<PgPool>,
     ) -> Result<Self, std::io::Error> {
         Application::ensure_storage_path(&configuration).await;
         let connection_pool =
