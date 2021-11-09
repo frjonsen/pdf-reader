@@ -15,24 +15,26 @@ pub struct TestApp {
     pub test_id: Uuid,
 }
 
-impl TestApp {
-    pub async fn drop(&mut self) {
-        self.db_pool.close().await;
-        let options = PgConnectOptions::from_str(&self.config.get_database_location())
-            .expect("Failed to parse connection string");
-
-        PgConnection::connect_with(&options)
-            .await
-            .expect("Failed to connect to Postgres")
-            .execute(&*format!(
-                r#"DROP DATABASE "{}""#,
-                self.test_id.to_hyphenated().to_string()
-            ))
-            .await
-            .expect("Failed to drop database on cleanup");
-
+impl Drop for TestApp {
+    fn drop(&mut self) {
         std::fs::remove_dir_all(self.config.storage_location.clone())
             .expect("Failed to delete temporary storage directory");
+
+        let database_name = self.config.get_database_name();
+        let command = format!(r#"DROP DATABASE "{}" WITH (FORCE);"#, database_name);
+        let result = std::process::Command::new("psql")
+            .env("PGUSER", "postgres")
+            .env("PGPASSWORD", "password")
+            .env("PGHOST", "localhost")
+            .arg("-c")
+            .arg(command)
+            .output()
+            .unwrap();
+
+        if !result.status.success() {
+            println!("{:?}", std::str::from_utf8(&result.stderr));
+            panic!("Failed to delete database after test");
+        }
     }
 }
 

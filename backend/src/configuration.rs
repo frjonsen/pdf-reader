@@ -13,6 +13,10 @@ impl Settings {
         self.storage_location.join("documents")
     }
 
+    pub fn get_database_name(&self) -> String {
+        self.database_name.clone().unwrap_or("pdfreader".to_owned())
+    }
+
     pub fn get_database_location(&self) -> String {
         self.database_location
             .clone()
@@ -21,7 +25,7 @@ impl Settings {
 
     pub fn get_connection_string_with_db(&self) -> String {
         let location = self.get_database_location();
-        let database_name = self.database_name.clone().unwrap_or("pdfreader".to_owned());
+        let database_name = self.get_database_name();
         format!("{}/{}", location, database_name)
     }
 }
