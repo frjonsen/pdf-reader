@@ -1,14 +1,13 @@
 {
   "db": "PostgreSQL",
-  "9e6eb508cb6e53c29bd10966f3e33da399bf18691fe33b8c0f107aff5040d117": {
-    "query": "INSERT INTO Documents (id, name, added_on) VALUES ($1, $2, $3)",
+  "555f87fd154defc8d1dd428fe83689975b6fe013015cffbed4d40c2fbb06b77e": {
+    "query": "INSERT INTO Documents (id, name) VALUES ($1, $2)",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
           "Uuid",
-          "Text",
-          "Timestamptz"
+          "Text"
         ]
       },
       "nullable": []
@@ -32,12 +31,18 @@
           "ordinal": 2,
           "name": "added_on",
           "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "current_page",
+          "type_info": "Int4"
         }
       ],
       "parameters": {
         "Left": []
       },
       "nullable": [
+        false,
         false,
         false,
         false

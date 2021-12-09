@@ -1,13 +1,14 @@
 use crate::configuration::Settings;
-use crate::models::Document;
+use crate::models::{Document, UpdateDocumentRequest};
 use actix_files::NamedFile;
 use actix_multipart::Multipart;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::Result as AWResult;
 use actix_web::{error, web, HttpResponse, Scope};
 use futures::StreamExt;
-use futures::TryStreamExt;
-use sqlx::PgPool;
+use futures::{TryFutureExt, TryStreamExt};
+use sqlx::postgres::PgQueryResult;
+use sqlx::{PgPool, Postgres, Transaction};
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
@@ -15,7 +16,7 @@ pub async fn save_document_to_disk(
     id: &Uuid,
     field: &mut actix_multipart::Field,
     config: &Settings,
-) -> AWResult<Document> {
+) -> AWResult<String> {
     let base_path = config.documents_storage_path();
     let file_path = base_path.join(id.to_string()).with_extension("pdf");
 
@@ -40,11 +41,7 @@ pub async fn save_document_to_disk(
             .map_err(|_| error::ErrorInternalServerError("Failed to write chunk to storage"))?;
     }
 
-    Ok(Document {
-        id: *id,
-        name: filename,
-        added_on: chrono::Utc::now(),
-    })
+    Ok(filename)
 }
 
 async fn list_documents(pool: web::Data<PgPool>) -> AWResult<HttpResponse> {
@@ -87,6 +84,27 @@ fn delete_documents(document_ids: &[Uuid], config: &Settings) {
     }
 }
 
+async fn insert_document<'a>(
+    id: Uuid,
+    filename: String,
+    transaction: &mut Transaction<'a, Postgres>,
+) -> AWResult<()> {
+    println!("Saving file {} in database", filename);
+    sqlx::query!(
+        "INSERT INTO Documents (id, name) VALUES ($1, $2)",
+        id,
+        filename
+    )
+    .execute(transaction)
+    .await
+    .map_err(|e| {
+        println!("{}", e);
+        error::ErrorInternalServerError("Failed to insert document")
+    })?;
+
+    Ok(())
+}
+
 async fn upload_document(
     pool: web::Data<PgPool>,
     config: web::Data<Settings>,
@@ -101,27 +119,18 @@ async fn upload_document(
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let id = uuid::Uuid::new_v4();
-        match save_document_to_disk(&id, &mut field, config.get_ref()).await {
-            Ok(f) => {
-                println!("Saving file {} in database", f.name);
-                sqlx::query!(
-                    "INSERT INTO Documents (id, name, added_on) VALUES ($1, $2, $3)",
-                    id,
-                    f.name,
-                    f.added_on
-                )
-                .execute(&mut tx)
-                .await
-                .unwrap();
-                saved.push(f.id);
+        let res = save_document_to_disk(&id, &mut field, config.get_ref())
+            .and_then(|f| {
+                saved.push(id);
+                insert_document(id, f, &mut tx)
+            })
+            .await;
+
+        if let Err(e) = res {
+            if !saved.is_empty() {
+                delete_documents(&saved, config.get_ref());
             }
-            Err(e) => {
-                println!("Failed to store file");
-                if !saved.is_empty() {
-                    delete_documents(&saved, config.get_ref());
-                }
-                return Err(e);
-            }
+            return Err(e);
         }
     }
 
@@ -173,9 +182,34 @@ async fn get_document(
     Ok(file)
 }
 
+async fn update_document_status(
+    pool: web::Data<PgPool>,
+    update_request: web::Json<UpdateDocumentRequest>,
+    id: web::Path<Uuid>,
+) -> AWResult<HttpResponse> {
+    let result: PgQueryResult = sqlx::query("UPDATE Documents SET current_page = $1 WHERE id = $2")
+        .bind(update_request.current_page)
+        .bind(*id)
+        .execute(pool.get_ref())
+        .await
+        .map_err(|e| {
+            println!("{}", e);
+            error::ErrorInternalServerError("Failed to make query")
+        })?;
+
+    if result.rows_affected() == 0 {
+        Err(error::ErrorNotFound(
+            "Document could not be updated because it was not found",
+        ))
+    } else {
+        Ok(HttpResponse::NoContent().finish())
+    }
+}
+
 pub fn setup_documents_service() -> Scope {
     web::scope("/documents")
         .route("{id}", web::get().to(get_document))
+        .route("{id}", web::patch().to(update_document_status))
         .route("", web::get().to(list_documents))
         .route("", web::post().to(upload_document))
 }
