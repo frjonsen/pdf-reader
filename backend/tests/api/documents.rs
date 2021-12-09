@@ -21,6 +21,26 @@ async fn upload_document() {
         .expect("Failed to execute request");
 
     assert_eq!(response.status(), reqwest::StatusCode::CREATED);
+
+    let document = sqlx::query_as!(Document, "SELECT * FROM Documents")
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+
+    let documents_location = &app.config.storage_location.join("documents");
+    let storage_contents =
+        std::fs::read_dir(documents_location).expect("Failed to read storage contents");
+    let file: Vec<_> = storage_contents
+        .map(Result::ok)
+        .map(Option::unwrap)
+        .collect();
+    let file = file.get(0).unwrap();
+    let expected_file_name = format!("{}.pdf", document.id);
+    assert_eq!(file.file_name().to_string_lossy(), expected_file_name);
+
+    let file_contents =
+        std::fs::read_to_string(documents_location.join(expected_file_name)).unwrap();
+    assert_eq!(file_contents, "hello");
 }
 
 #[actix_rt::test]
