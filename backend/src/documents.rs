@@ -153,16 +153,15 @@ async fn get_document(
     id: web::Path<Uuid>,
 ) -> AWResult<NamedFile> {
     println!("Looking up file {}", id);
-    let document: Document =
-        sqlx::query_as("SELECT id, name, added_on FROM Documents WHERE id = $1")
-            .bind(id.to_string())
-            .fetch_optional(pool.get_ref())
-            .await
-            .map_err(|e| {
-                println!("{}", e);
-                error::ErrorInternalServerError("Failed to make query")
-            })?
-            .ok_or_else(|| error::ErrorNotFound("Not found"))?;
+    let document: Document = sqlx::query_as("SELECT * FROM Documents WHERE id = $1")
+        .bind(*id)
+        .fetch_optional(pool.get_ref())
+        .await
+        .map_err(|e| {
+            println!("{}", e);
+            error::ErrorInternalServerError("Failed to make query")
+        })?
+        .ok_or_else(|| error::ErrorNotFound("Not found"))?;
 
     let path = config
         .documents_storage_path()
@@ -172,9 +171,8 @@ async fn get_document(
     let file = NamedFile::open(path)
         .map_err(|_| error::ErrorInternalServerError("Unable to read file from disk"))?;
 
-    let cd = format!("attachment; filename=\"{}\"", document.name);
     let cd = ContentDisposition {
-        parameters: vec![DispositionParam::Filename(cd)],
+        parameters: vec![DispositionParam::Filename(document.name)],
         disposition: DispositionType::Attachment,
     };
     let file = file.set_content_disposition(cd);
