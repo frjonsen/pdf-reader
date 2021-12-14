@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
-import { Document } from "../models";
 import { Documents } from "../components/documents";
+import { Uploader } from "../components/uploader";
 
 const Home: NextPage = () => {
   return (
@@ -13,10 +13,8 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Wrapper />
-
       <main>
-        <h1 className="text-4xl font-bold underline">Hell world!</h1>
+        <Wrapper />
       </main>
     </div>
   );
@@ -38,6 +36,7 @@ function Wrapper() {
   };
   return (
     <>
+      <Uploader />
       <Documents updateDocument={updateDocument} />
       <p>{text}</p>
     </>
