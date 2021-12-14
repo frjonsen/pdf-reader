@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "semi-style": [
+      "error",
+      "last"
+    ],
+    "semi": ["error", "always"]
+  },
+  "extends": [
+    "prettier",
+    "next/core-web-vitals",
+    "plugin:react-hooks/recommended"
+  ],
+  "plugins": ["prettier"]
+}
