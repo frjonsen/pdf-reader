@@ -1,8 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState, useEffect } from "react";
-import { Documents } from "../components/documents";
-import { Uploader } from "../components/uploader";
+import Viewer from "../components/viewer";
 import TopMenu from "../components/topmenu";
 import { Document } from "../models";
 import axios from "axios";
@@ -57,6 +56,7 @@ function Main() {
         fetchDocumentsError={documentsFetchError}
         uploadDoneCallback={updateDocuments}
       />
+      {currentDocument && <Viewer document={currentDocument} />}
       <p>{text}</p>
     </>
   );
