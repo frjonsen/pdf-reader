@@ -9,7 +9,14 @@ DB_PORT="${POSTGRES_PORT:=5432}"
 
 if [[ -z "${SKIP_DOCKER}" ]]
 then
+    mkdir -p /home/fredrik/.pdfreader/postgres
+    chown -R fredrik:fredrik /home/fredrik/.pdfreader
+
     docker run \
+        -v /home/fredrik/.pdfreader/postgres:/var/lib/postgresql/data \
+        --user 1000:1000 \
+        -v /etc/passwd:/etc/passwd:ro \
+        -e PGDATA=/var/lib/postgresql/data/pgdata \
         -e POSTGRES_USER=${DB_USER} \
         -e POSTGRES_PASSWORD=${DB_PASSWORD} \
         -e POSTGRES_DB=${DB_NAME} \

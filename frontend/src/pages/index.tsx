@@ -35,8 +35,8 @@ function Main() {
       .then((docs) => {
         setDocuments(docs.data);
       })
-      .catch((e) => {
-        setDocumentsFetchError(e);
+      .catch((e: Error) => {
+        setDocumentsFetchError(e.message);
       });
   };
   useEffect(updateDocuments, []);
