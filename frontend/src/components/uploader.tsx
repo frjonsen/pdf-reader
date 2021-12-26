@@ -40,7 +40,6 @@ export function Uploader({
       <Input
         accept="application/pdf"
         id="contained-button-file"
-        multiple
         type="file"
         onChange={(e) => sendFile(e, uploadDoneCallback)}
       />

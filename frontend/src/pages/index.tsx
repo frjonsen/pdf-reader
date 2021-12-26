@@ -23,11 +23,32 @@ const Home: NextPage = () => {
 };
 
 function Main() {
-  const [currentDocument, setDocument] = useState<string | null>(null);
+  const [currentDocument, setDocument] = useState<Document | null>(null);
   const [documents, setDocuments] = useState<Document[] | null>(null);
   const [documentsFetchError, setDocumentsFetchError] = useState<string | null>(
     null
   );
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const updateCurrentPage = (page: number) => {
+    setCurrentPage(page);
+    axios
+      .patch(`/api/documents/${currentDocument!.id}`, { current_page: page })
+      .catch((e: Error) => {
+        console.error(e);
+      });
+  };
+
+  const setCurrentDocument = (documentId: string) => {
+    const doc = documents?.find((d) => d.id === documentId);
+    if (!doc) {
+      console.error("Document not found in list of known documents");
+      return;
+    }
+    setDocument(doc);
+    setCurrentPage(doc.current_page);
+  };
 
   const updateDocuments = () => {
     axios
@@ -41,23 +62,28 @@ function Main() {
   };
   useEffect(updateDocuments, []);
 
-  let text: string;
-  if (currentDocument === null) {
-    text = "No document selected";
-  } else {
-    text = `Current document is ${currentDocument}`;
-  }
+  const setNumberOfPages = (numberOfPages: number) => {
+    if (numPages != numberOfPages) setNumPages(numberOfPages);
+  };
 
   return (
     <>
       <TopMenu
-        updateDocument={setDocument}
+        numPages={numPages ?? 0}
+        setCurrentPage={updateCurrentPage}
+        currentPage={currentPage}
+        updateDocument={setCurrentDocument}
         documents={documents}
         fetchDocumentsError={documentsFetchError}
         uploadDoneCallback={updateDocuments}
       />
-      {currentDocument && <Viewer document={currentDocument} />}
-      <p>{text}</p>
+      {currentDocument && (
+        <Viewer
+          currentPage={currentPage}
+          setNumPages={setNumberOfPages}
+          document={currentDocument.id}
+        />
+      )}
     </>
   );
 }

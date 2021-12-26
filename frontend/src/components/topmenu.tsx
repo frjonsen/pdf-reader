@@ -4,8 +4,9 @@ import Box from "@mui/material/Box";
 import { Documents } from "./documents";
 import { Uploader } from "./uploader";
 import { Document } from "../models";
+import PageControl, { PageControlProps } from "./pagecontrol";
 
-interface TopMenuProps {
+interface TopMenuProps extends PageControlProps {
   updateDocument: (doc: string) => void;
   documents: Document[] | null;
   fetchDocumentsError: string | null;
@@ -17,6 +18,9 @@ export default function TopMenu({
   updateDocument,
   fetchDocumentsError,
   uploadDoneCallback,
+  numPages,
+  setCurrentPage,
+  currentPage,
 }: TopMenuProps) {
   return (
     <AppBar position="static">
@@ -28,6 +32,11 @@ export default function TopMenu({
             fetchDocumentsError={fetchDocumentsError}
           />
         </Box>
+        {numPages != 0 && (
+          <PageControl
+            {...{ currentPage, numPages, setCurrentPage }}
+          ></PageControl>
+        )}
         <Uploader uploadDoneCallback={uploadDoneCallback} />
       </Toolbar>
     </AppBar>
