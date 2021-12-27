@@ -8,6 +8,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 interface ViewerProps {
   document: string;
   currentPage: number;
+  dualPane: boolean;
   setNumPages: (numPages: number) => void;
 }
 function getWindowDimensions() {
@@ -38,12 +39,13 @@ function useWindowDimensions() {
 export default function Viewer({
   currentPage,
   document,
+  dualPane,
   setNumPages,
 }: ViewerProps) {
   const [pdfBuiltinWidth, setPdfBuildinWidth] = useState(300);
   const windowDimensions = useWindowDimensions();
   const calcZoom = (pdfWidth: number, windowWidth: number) =>
-    windowWidth / pdfWidth;
+    windowWidth / (pdfWidth * (dualPane ? 2 : 1));
   const [zoom, setZoom] = useState(
     calcZoom(pdfBuiltinWidth, windowDimensions.width)
   );
@@ -61,6 +63,14 @@ export default function Viewer({
       setZoom(calcZoom(page.originalWidth, windowDimensions.width));
   }
 
+  const generatePage = (pageNum: number) => {
+    return (
+      <Grid item md={6}>
+        <Page onLoadSuccess={onPageLoad} scale={zoom} pageNumber={pageNum} />
+      </Grid>
+    );
+  };
+
   return (
     <Box id="ViewerWrapper">
       <Document
@@ -68,13 +78,8 @@ export default function Viewer({
         onLoadSuccess={onDocumentLoadSuccess}
       >
         <Grid container spacing={0}>
-          <Grid item md={6}>
-            <Page
-              onLoadSuccess={onPageLoad}
-              scale={zoom}
-              pageNumber={currentPage}
-            />
-          </Grid>
+          {generatePage(currentPage)}
+          {dualPane && generatePage(currentPage + 1)}
         </Grid>
       </Document>
     </Box>

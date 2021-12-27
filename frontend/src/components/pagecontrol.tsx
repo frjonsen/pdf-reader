@@ -5,7 +5,7 @@ import ArrowBack from "@mui/icons-material/ArrowBack";
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import React from "react";
-import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 
 export interface PageControlProps {
   numPages: number;

@@ -30,6 +30,7 @@ function Main() {
   );
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [dualPaneMode, setDualPaneMode] = useState<boolean>(false);
 
   const updateCurrentPage = (page: number) => {
     setCurrentPage(page);
@@ -76,9 +77,11 @@ function Main() {
         documents={documents}
         fetchDocumentsError={documentsFetchError}
         uploadDoneCallback={updateDocuments}
+        toggleDualPage={() => setDualPaneMode(!dualPaneMode)}
       />
       {currentDocument && (
         <Viewer
+          dualPane={dualPaneMode}
           currentPage={currentPage}
           setNumPages={setNumberOfPages}
           document={currentDocument.id}

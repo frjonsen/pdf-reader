@@ -5,9 +5,12 @@ import { Documents } from "./documents";
 import { Uploader } from "./uploader";
 import { Document } from "../models";
 import PageControl, { PageControlProps } from "./pagecontrol";
+import IconButton from "@mui/material/IconButton";
+import MenuBook from "@mui/icons-material/MenuBook";
 
 interface TopMenuProps extends PageControlProps {
   updateDocument: (doc: string) => void;
+  toggleDualPage: () => void;
   documents: Document[] | null;
   fetchDocumentsError: string | null;
   uploadDoneCallback: () => void;
@@ -21,6 +24,7 @@ export default function TopMenu({
   numPages,
   setCurrentPage,
   currentPage,
+  toggleDualPage,
 }: TopMenuProps) {
   return (
     <AppBar position="static">
@@ -33,9 +37,12 @@ export default function TopMenu({
           />
         </Box>
         {numPages != 0 && (
-          <PageControl
-            {...{ currentPage, numPages, setCurrentPage }}
-          ></PageControl>
+          <>
+            <IconButton onClick={toggleDualPage}>
+              <MenuBook />
+            </IconButton>
+            <PageControl {...{ currentPage, numPages, setCurrentPage }} />
+          </>
         )}
         <Uploader uploadDoneCallback={uploadDoneCallback} />
       </Toolbar>
