@@ -44,11 +44,6 @@ export default function Viewer({
 }: ViewerProps) {
   const [pdfBuiltinWidth, setPdfBuildinWidth] = useState(300);
   const windowDimensions = useWindowDimensions();
-  const calcZoom = (pdfWidth: number, windowWidth: number) =>
-    windowWidth / (pdfWidth * (dualPane ? 2 : 1));
-  const [zoom, setZoom] = useState(
-    calcZoom(pdfBuiltinWidth, windowDimensions.width)
-  );
 
   function onDocumentLoadSuccess(document: PDFDocumentProxy) {
     console.log("Setting numPages to ", document.numPages);
@@ -58,15 +53,18 @@ export default function Viewer({
   function onPageLoad(page: PDFPageProxy) {
     if (pdfBuiltinWidth != page.originalWidth)
       setPdfBuildinWidth(page.originalWidth);
-    const newZoom = calcZoom(page.originalWidth, windowDimensions.width);
-    if (zoom != newZoom)
-      setZoom(calcZoom(page.originalWidth, windowDimensions.width));
   }
 
+  const pageWidth =
+    (windowDimensions.width - (dualPane ? 20 : 0)) / (dualPane ? 2 : 1);
   const generatePage = (pageNum: number) => {
     return (
       <Grid item md={6}>
-        <Page onLoadSuccess={onPageLoad} scale={zoom} pageNumber={pageNum} />
+        <Page
+          onLoadSuccess={onPageLoad}
+          width={pageWidth}
+          pageNumber={pageNum}
+        />
       </Grid>
     );
   };
