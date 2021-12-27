@@ -1,2 +1,2 @@
 nginx
-exec /bin/pdf-reader
+exec gosu $USER:$USER /bin/pdfreader
