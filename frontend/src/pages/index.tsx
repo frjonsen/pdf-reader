@@ -34,9 +34,17 @@ function Main() {
   const [fitToHeight, setFitToHeight] = useState<boolean>(true);
 
   const updateCurrentPage = (page: number) => {
-    setCurrentPage(page);
+    const movement = page - currentPage;
+    let actualPage = page;
+    if (Math.abs(movement) == 1) {
+      actualPage = currentPage + movement * (dualPaneMode ? 2 : 1);
+    }
+    setCurrentPage(actualPage);
+
     axios
-      .patch(`/api/documents/${currentDocument!.id}`, { current_page: page })
+      .patch(`/api/documents/${currentDocument!.id}`, {
+        current_page: actualPage,
+      })
       .catch((e: Error) => {
         console.error(e);
       });
