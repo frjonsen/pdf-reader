@@ -7,10 +7,12 @@ import { Document } from "../models";
 import PageControl, { PageControlProps } from "./pagecontrol";
 import IconButton from "@mui/material/IconButton";
 import MenuBook from "@mui/icons-material/MenuBook";
+import Height from "@mui/icons-material/Height";
 
 interface TopMenuProps extends PageControlProps {
   updateDocument: (doc: string) => void;
   toggleDualPage: () => void;
+  toggleFitToHeight: () => void;
   documents: Document[] | null;
   fetchDocumentsError: string | null;
   uploadDoneCallback: () => void;
@@ -25,6 +27,7 @@ export default function TopMenu({
   setCurrentPage,
   currentPage,
   toggleDualPage,
+  toggleFitToHeight,
 }: TopMenuProps) {
   return (
     <AppBar position="static">
@@ -38,6 +41,9 @@ export default function TopMenu({
         </Box>
         {numPages != 0 && (
           <>
+            <IconButton onClick={toggleFitToHeight}>
+              <Height />
+            </IconButton>
             <IconButton onClick={toggleDualPage}>
               <MenuBook />
             </IconButton>

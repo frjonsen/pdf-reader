@@ -9,6 +9,7 @@ interface ViewerProps {
   document: string;
   currentPage: number;
   dualPane: boolean;
+  fitToHeight: boolean;
   setNumPages: (numPages: number) => void;
 }
 function getWindowDimensions() {
@@ -41,6 +42,7 @@ export default function Viewer({
   document,
   dualPane,
   setNumPages,
+  fitToHeight,
 }: ViewerProps) {
   const [pdfBuiltinWidth, setPdfBuildinWidth] = useState(300);
   const windowDimensions = useWindowDimensions();
@@ -59,10 +61,11 @@ export default function Viewer({
     (windowDimensions.width - (dualPane ? 20 : 0)) / (dualPane ? 2 : 1);
   const generatePage = (pageNum: number) => {
     return (
-      <Grid item md={6}>
+      <Grid item>
         <Page
           onLoadSuccess={onPageLoad}
-          width={pageWidth}
+          width={fitToHeight ? undefined : pageWidth}
+          height={fitToHeight ? windowDimensions.height : undefined}
           pageNumber={pageNum}
         />
       </Grid>
@@ -75,7 +78,7 @@ export default function Viewer({
         file={`/api/documents/${document}`}
         onLoadSuccess={onDocumentLoadSuccess}
       >
-        <Grid container spacing={0}>
+        <Grid container spacing={1} justifyContent="center">
           {generatePage(currentPage)}
           {dualPane && generatePage(currentPage + 1)}
         </Grid>
