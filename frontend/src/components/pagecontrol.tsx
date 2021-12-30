@@ -36,9 +36,7 @@ export default function PageControl({
   };
 
   useEffect(() => {
-    console.log("Setting up event handler");
     const handleGlobalKey = (event: KeyboardEvent) => {
-      console.log("Got event", event.key);
       if (event.key == "ArrowRight") {
         movePage(1);
       }

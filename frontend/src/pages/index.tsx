@@ -33,6 +33,8 @@ function Main() {
   const [dualPaneMode, setDualPaneMode] = useState<boolean>(false);
   const [fitToHeight, setFitToHeight] = useState<boolean>(true);
 
+  const getLastActiveDocument = () => localStorage.getItem("lastDocument");
+
   const updateCurrentPage = (page: number) => {
     const movement = page - currentPage;
     let actualPage = page;
@@ -50,14 +52,30 @@ function Main() {
       });
   };
 
-  const setCurrentDocument = (documentId: string) => {
-    const doc = documents?.find((d) => d.id === documentId);
+  const setCurrentDocument = (
+    documentId: string,
+    existingDocuments: Document[] | undefined = undefined
+  ) => {
+    const doc = (existingDocuments ?? documents)?.find(
+      (d) => d.id === documentId
+    );
     if (!doc) {
       console.error("Document not found in list of known documents");
       return;
     }
     setDocument(doc);
     setCurrentPage(doc.current_page);
+    localStorage.setItem("lastDocument", doc.id);
+  };
+
+  const setCorrectCurrentPage = (docId: string, docs: Document[]) => {
+    const docFromApi = docs.find((d) => d.id === docId);
+    if (!docFromApi) {
+      console.warn("Didn't find currently selected document in documents list");
+      return;
+    }
+
+    setCurrentPage(docFromApi.current_page);
   };
 
   const updateDocuments = () => {
@@ -65,6 +83,10 @@ function Main() {
       .get<Document[]>("/api/documents")
       .then((docs) => {
         setDocuments(docs.data);
+        const lastDocument = getLastActiveDocument();
+        if (!lastDocument) return;
+        setCurrentDocument(lastDocument, docs.data);
+        setCorrectCurrentPage(lastDocument, docs.data);
       })
       .catch((e: Error) => {
         setDocumentsFetchError(e.message);

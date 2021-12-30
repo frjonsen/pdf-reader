@@ -48,7 +48,6 @@ export default function Viewer({
   const windowDimensions = useWindowDimensions();
 
   function onDocumentLoadSuccess(document: PDFDocumentProxy) {
-    console.log("Setting numPages to ", document.numPages);
     setNumPages(document.numPages);
   }
 
