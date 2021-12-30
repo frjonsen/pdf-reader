@@ -2,7 +2,7 @@ import Stack from "@mui/material/Stack";
 import IconButton from "@mui/material/IconButton";
 import ArrowForward from "@mui/icons-material/ArrowForward";
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import React from "react";
 import Typography from "@mui/material/Typography";
@@ -34,6 +34,21 @@ export default function PageControl({
       inputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    console.log("Setting up event handler");
+    const handleGlobalKey = (event: KeyboardEvent) => {
+      console.log("Got event", event.key);
+      if (event.key == "ArrowRight") {
+        movePage(1);
+      }
+      if (event.key == "ArrowLeft") {
+        movePage(-1);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey, false);
+    return () => window.removeEventListener("keydown", handleGlobalKey, false);
+  });
 
   const pageChangedByNumber = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key != "Enter") return;
