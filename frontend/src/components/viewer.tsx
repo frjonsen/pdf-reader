@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 type LoadCallback = Required<DocumentProps>["onLoadSuccess"];
@@ -87,6 +88,7 @@ export default function Viewer(props: ViewerProps) {
         file={`/api/documents/${props.document}`}
         onLoadSuccess={onDocumentLoadSuccess}
         externalLinkTarget="_blank"
+        renderMode="svg"
       >
         <Grid container spacing={1} justifyContent="center">
           {generatePage(props.currentPage)}
