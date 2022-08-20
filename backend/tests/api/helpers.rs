@@ -49,7 +49,7 @@ pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool
         .expect("Failed to connect to Postgres")
         .execute(&*format!(
             r#"CREATE DATABASE "{}""#,
-            test_id.to_hyphenated().to_string()
+            test_id.to_hyphenated()
         ))
         .await
         .expect("Failed to create database");

@@ -1,9 +1,11 @@
-import { Document, Page, pdfjs, PDFPageProxy } from "react-pdf";
-import React, { useEffect, useState } from "react";
+import { Document, Page, pdfjs, PDFPageProxy, DocumentProps } from "react-pdf";
+import React, { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+
+type LoadCallback = Required<DocumentProps>["onLoadSuccess"];
 
 interface ViewerProps {
   document: string;
@@ -41,9 +43,12 @@ export default function Viewer(props: ViewerProps) {
   const [pdfBuiltinWidth, setPdfBuildinWidth] = useState(300);
   const windowDimensions = useWindowDimensions();
 
-  function onDocumentLoadSuccess(_document: PDFDocumentProxy) {
-    props.setNumPages(_document.numPages);
-  }
+  const onDocumentLoadSuccess: LoadCallback = useCallback(
+    (pdf) => {
+      props.setNumPages(pdf.numPages);
+    },
+    [props]
+  );
 
   function onPageLoad(page: PDFPageProxy) {
     if (pdfBuiltinWidth != page.originalWidth)
@@ -81,6 +86,7 @@ export default function Viewer(props: ViewerProps) {
       <Document
         file={`/api/documents/${props.document}`}
         onLoadSuccess={onDocumentLoadSuccess}
+        externalLinkTarget="_blank"
       >
         <Grid container spacing={1} justifyContent="center">
           {generatePage(props.currentPage)}

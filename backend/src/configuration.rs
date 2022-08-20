@@ -14,7 +14,9 @@ impl Settings {
     }
 
     pub fn get_database_name(&self) -> String {
-        self.database_name.clone().unwrap_or("pdfreader".to_owned())
+        self.database_name
+            .clone()
+            .unwrap_or_else(|| "pdfreader".to_owned())
     }
 
     pub fn get_database_location(&self) -> String {

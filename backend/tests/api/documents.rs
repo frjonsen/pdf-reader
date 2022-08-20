@@ -1,6 +1,5 @@
 use crate::helpers::spawn_app;
 use pdf_reader::models::Document;
-use reqwest;
 use std::{collections::HashMap, io::Write};
 use uuid::Uuid;
 

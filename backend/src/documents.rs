@@ -184,7 +184,10 @@ async fn update_document_status(
     update_request: web::Json<UpdateDocumentRequest>,
     id: web::Path<Uuid>,
 ) -> AWResult<HttpResponse> {
-    println!("Setting current page of {} to {}", id, update_request.current_page);
+    println!(
+        "Setting current page of {} to {}",
+        id, update_request.current_page
+    );
     let result: PgQueryResult = sqlx::query("UPDATE Documents SET current_page = $1 WHERE id = $2")
         .bind(update_request.current_page)
         .bind(*id)
