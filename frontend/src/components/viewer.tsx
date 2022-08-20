@@ -2,7 +2,7 @@ import { Document, Page, pdfjs, PDFPageProxy } from "react-pdf";
 import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
-import { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 interface ViewerProps {
