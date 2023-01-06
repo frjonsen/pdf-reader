@@ -30,8 +30,14 @@ function Main() {
   );
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [previousPage, setPreviousPage] = useState<number>(1);
   const [dualPaneMode, setDualPaneMode] = useState<boolean>(false);
   const [fitToHeight, setFitToHeight] = useState<boolean>(true);
+
+  const _setCurrentPage = (page: number) => {
+    setPreviousPage(currentPage);
+    setCurrentPage(page);
+  };
 
   const getLastActiveDocument = () => localStorage.getItem("lastDocument");
 
@@ -41,7 +47,7 @@ function Main() {
     if (Math.abs(movement) == 1) {
       actualPage = currentPage + movement * (dualPaneMode ? 2 : 1);
     }
-    setCurrentPage(actualPage);
+    _setCurrentPage(actualPage);
 
     axios
       .patch(`/api/documents/${currentDocument!.id}`, {
@@ -64,7 +70,7 @@ function Main() {
       return;
     }
     setDocument(doc);
-    setCurrentPage(doc.current_page);
+    _setCurrentPage(doc.current_page);
     localStorage.setItem("lastDocument", doc.id);
   };
 
@@ -75,7 +81,7 @@ function Main() {
       return;
     }
 
-    setCurrentPage(docFromApi.current_page);
+    _setCurrentPage(docFromApi.current_page);
   };
 
   const updateDocuments = () => {
@@ -110,6 +116,7 @@ function Main() {
         uploadDoneCallback={updateDocuments}
         toggleFitToHeight={() => setFitToHeight(!fitToHeight)}
         toggleDualPage={() => setDualPaneMode(!dualPaneMode)}
+        previousPage={previousPage}
       />
       {currentDocument && (
         <Viewer
@@ -118,6 +125,7 @@ function Main() {
           currentPage={currentPage}
           setNumPages={setNumberOfPages}
           document={currentDocument.id}
+          setCurrentPage={_setCurrentPage}
         />
       )}
     </>

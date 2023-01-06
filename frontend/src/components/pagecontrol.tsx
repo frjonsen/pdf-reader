@@ -2,6 +2,7 @@ import Stack from "@mui/material/Stack";
 import IconButton from "@mui/material/IconButton";
 import ArrowForward from "@mui/icons-material/ArrowForward";
 import ArrowBack from "@mui/icons-material/ArrowBack";
+import ReplayIcon from "@mui/icons-material/Replay";
 import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import React from "react";
@@ -11,12 +12,14 @@ export interface PageControlProps {
   numPages: number;
   setCurrentPage: (currentPage: number) => void;
   currentPage: number;
+  previousPage: number;
 }
 
 export default function PageControl({
   numPages,
   setCurrentPage,
   currentPage,
+  previousPage,
 }: PageControlProps) {
   const inputRef: React.Ref<HTMLInputElement> = React.createRef();
   const updateCurrentPage = (currentPage: number) => {
@@ -67,6 +70,9 @@ export default function PageControl({
 
   return (
     <Stack alignItems="center" direction="row">
+      <IconButton onClick={() => updateCurrentPage(previousPage)}>
+        <ReplayIcon />
+      </IconButton>
       <IconButton onClick={() => movePage(-1)}>
         <ArrowBack />
       </IconButton>

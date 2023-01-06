@@ -49,7 +49,7 @@ async fn update_document() {
 
     let document_id = Uuid::new_v4();
     sqlx::query("INSERT INTO Documents (id, name) VALUES ($1, $2)")
-        .bind(&document_id)
+        .bind(document_id)
         .bind("adocument")
         .execute(&app.db_pool)
         .await
@@ -82,7 +82,7 @@ async fn get_document() {
 
     let document_id = Uuid::new_v4();
     sqlx::query("INSERT INTO Documents (id, name) VALUES ($1, $2)")
-        .bind(&document_id)
+        .bind(document_id)
         .bind("adocument")
         .execute(&app.db_pool)
         .await

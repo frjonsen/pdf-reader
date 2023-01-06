@@ -28,6 +28,7 @@ export default function TopMenu({
   currentPage,
   toggleDualPage,
   toggleFitToHeight,
+  previousPage,
 }: TopMenuProps) {
   return (
     <AppBar position="static">
@@ -47,7 +48,9 @@ export default function TopMenu({
             <IconButton onClick={toggleDualPage}>
               <MenuBook />
             </IconButton>
-            <PageControl {...{ currentPage, numPages, setCurrentPage }} />
+            <PageControl
+              {...{ currentPage, numPages, setCurrentPage, previousPage }}
+            />
           </>
         )}
         <Uploader uploadDoneCallback={uploadDoneCallback} />

@@ -14,6 +14,7 @@ interface ViewerProps {
   dualPane: boolean;
   fitToHeight: boolean;
   setNumPages: (numPages: number) => void;
+  setCurrentPage: (page: number) => void;
 }
 function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
@@ -75,7 +76,7 @@ export default function Viewer(props: ViewerProps) {
         <Page
           onLoadSuccess={onPageLoad}
           width={props.fitToHeight ? undefined : splitPageWidth}
-          height={props.fitToHeight ? windowDimensions.height : undefined}
+          height={props.fitToHeight ? windowDimensions.height - 64 : undefined}
           pageNumber={pageNum}
         />
       </Grid>
@@ -88,7 +89,10 @@ export default function Viewer(props: ViewerProps) {
         file={`/api/documents/${props.document}`}
         onLoadSuccess={onDocumentLoadSuccess}
         externalLinkTarget="_blank"
-        renderMode="svg"
+        renderMode="canvas"
+        onItemClick={({ pageNumber }) =>
+          props.setCurrentPage(Number.parseInt(pageNumber))
+        }
       >
         <Grid container spacing={1} justifyContent="center">
           {generatePage(props.currentPage)}

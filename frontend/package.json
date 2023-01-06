@@ -12,25 +12,25 @@
     "@emotion/styled": "^11.6.0",
     "@mui/icons-material": "^5.2.5",
     "@mui/material": "^5.2.4",
-    "axios": "^0.27.2",
-    "next": "12.2.5",
+    "axios": "1.1.3",
+    "next": "13.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-pdf": "6.0.0-beta.3"
+    "react-pdf": "6.1.1"
   },
   "devDependencies": {
-    "@types/node": "18.7.8",
-    "@types/react": "18.0.17",
+    "@types/node": "18.11.9",
+    "@types/react": "18.0.25",
     "@types/react-pdf": "^5.0.9",
     "autoprefixer": "^10.4.0",
-    "eslint": "8.22.0",
-    "eslint-config-next": "12.2.5",
+    "eslint": "8.28.0",
+    "eslint-config-next": "13.0.4",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "postcss": "^8.4.4",
     "prettier": "^2.5.1",
     "swr": "^1.1.1",
-    "typescript": "4.7.4"
+    "typescript": "4.9.3"
   }
 }
