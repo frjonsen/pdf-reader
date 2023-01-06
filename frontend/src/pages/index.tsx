@@ -5,6 +5,8 @@ import Viewer from "../components/viewer";
 import TopMenu from "../components/topmenu";
 import { Document } from "../models";
 import axios from "axios";
+import { Box, Toolbar } from "@mui/material";
+import Drawer, { SubDrawer } from "../components/Drawer/drawer";
 
 const Home: NextPage = () => {
   return (
@@ -33,6 +35,8 @@ function Main() {
   const [previousPage, setPreviousPage] = useState<number>(1);
   const [dualPaneMode, setDualPaneMode] = useState<boolean>(false);
   const [fitToHeight, setFitToHeight] = useState<boolean>(true);
+  const [drawerMode, setDrawerMode] = useState<SubDrawer>(SubDrawer.Bookmarks);
+  const [drawerWidth, setDrawerWidth] = useState(340);
 
   const _setCurrentPage = (page: number) => {
     setPreviousPage(currentPage);
@@ -105,7 +109,7 @@ function Main() {
   };
 
   return (
-    <>
+    <Box>
       <TopMenu
         numPages={numPages ?? 0}
         setCurrentPage={updateCurrentPage}
@@ -117,18 +121,37 @@ function Main() {
         toggleFitToHeight={() => setFitToHeight(!fitToHeight)}
         toggleDualPage={() => setDualPaneMode(!dualPaneMode)}
         previousPage={previousPage}
+        drawerWidth={drawerWidth}
+        drawerOpen={false}
+        setSidebarContents={(contents) =>
+          setDrawerMode(drawerMode === contents ? SubDrawer.None : contents)
+        }
       />
       {currentDocument && (
-        <Viewer
-          fitToHeight={fitToHeight}
-          dualPane={dualPaneMode}
+        <Drawer
+          width={drawerWidth}
+          subDrawer={drawerMode}
+          documentId={currentDocument.id}
+          setPage={updateCurrentPage}
           currentPage={currentPage}
-          setNumPages={setNumberOfPages}
-          document={currentDocument.id}
-          setCurrentPage={_setCurrentPage}
         />
       )}
-    </>
+      <Box>
+        <Toolbar />
+        {currentDocument && (
+          <Viewer
+            fitToHeight={fitToHeight}
+            dualPane={dualPaneMode}
+            currentPage={currentPage}
+            setNumPages={setNumberOfPages}
+            document={currentDocument.id}
+            setCurrentPage={_setCurrentPage}
+            drawerOpen={drawerMode !== SubDrawer.None}
+            drawerWidth={drawerWidth}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
 

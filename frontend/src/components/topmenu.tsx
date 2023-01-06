@@ -1,4 +1,4 @@
-import AppBar from "@mui/material/AppBar";
+import MuiAppBar, { AppBarProps } from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Box from "@mui/material/Box";
 import { Documents } from "./documents";
@@ -8,6 +8,9 @@ import PageControl, { PageControlProps } from "./pagecontrol";
 import IconButton from "@mui/material/IconButton";
 import MenuBook from "@mui/icons-material/MenuBook";
 import Height from "@mui/icons-material/Height";
+import { styled } from "@mui/material";
+import { SubDrawer } from "./Drawer/drawer";
+import Bookmark from "@mui/icons-material/Bookmark";
 
 interface TopMenuProps extends PageControlProps {
   updateDocument: (doc: string) => void;
@@ -16,7 +19,29 @@ interface TopMenuProps extends PageControlProps {
   documents: Document[] | null;
   fetchDocumentsError: string | null;
   uploadDoneCallback: () => void;
+  drawerOpen: boolean;
+  drawerWidth: number;
+  setSidebarContents: (subDrawer: SubDrawer) => void;
 }
+
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== "open",
+})<AppBarProps & { open: boolean; drawerWidth: number }>(
+  ({ theme, open, drawerWidth }) => ({
+    transition: theme.transitions.create(["margin", "width"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    ...(open && {
+      width: `calc(100% - ${drawerWidth}px)`,
+      marginLeft: `${drawerWidth}px`,
+      transition: theme.transitions.create(["margin", "width"], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }),
+  })
+);
 
 export default function TopMenu({
   documents,
@@ -29,9 +54,17 @@ export default function TopMenu({
   toggleDualPage,
   toggleFitToHeight,
   previousPage,
+  drawerOpen,
+  drawerWidth,
+  setSidebarContents,
 }: TopMenuProps) {
   return (
-    <AppBar position="static">
+    <AppBar
+      position="fixed"
+      open={drawerOpen}
+      drawerWidth={drawerWidth}
+      sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+    >
       <Toolbar>
         <Box sx={{ flexGrow: 1 }}>
           <Documents
@@ -40,6 +73,9 @@ export default function TopMenu({
             fetchDocumentsError={fetchDocumentsError}
           />
         </Box>
+        <IconButton>
+          <Bookmark onClick={() => setSidebarContents(SubDrawer.Bookmarks)} />
+        </IconButton>
         {numPages != 0 && (
           <>
             <IconButton onClick={toggleFitToHeight}>

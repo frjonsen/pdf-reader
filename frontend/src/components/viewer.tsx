@@ -15,6 +15,8 @@ interface ViewerProps {
   fitToHeight: boolean;
   setNumPages: (numPages: number) => void;
   setCurrentPage: (page: number) => void;
+  drawerOpen: boolean;
+  drawerWidth: number;
 }
 function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
@@ -42,7 +44,7 @@ function useWindowDimensions() {
 }
 
 export default function Viewer(props: ViewerProps) {
-  const [pdfBuiltinWidth, setPdfBuildinWidth] = useState(300);
+  const [pdfBuiltinWidth, setPdfBuiltinWidth] = useState(300);
   const windowDimensions = useWindowDimensions();
 
   const onDocumentLoadSuccess: LoadCallback = useCallback(
@@ -54,7 +56,7 @@ export default function Viewer(props: ViewerProps) {
 
   function onPageLoad(page: PDFPageProxy) {
     if (pdfBuiltinWidth != page.originalWidth)
-      setPdfBuildinWidth(page.originalWidth);
+      setPdfBuiltinWidth(page.originalWidth);
 
     const textLayers = document.querySelectorAll(
       ".react-pdf__Page__textContent"
@@ -84,7 +86,10 @@ export default function Viewer(props: ViewerProps) {
   };
 
   return (
-    <Box id="ViewerWrapper">
+    <Box
+      id="ViewerWrapper"
+      style={props.drawerOpen ? { marginLeft: `${props.drawerWidth}px` } : {}}
+    >
       <Document
         file={`/api/documents/${props.document}`}
         onLoadSuccess={onDocumentLoadSuccess}

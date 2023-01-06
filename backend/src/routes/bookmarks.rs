@@ -1,5 +1,6 @@
 use actix_web::{error, web, Scope};
 use actix_web::{HttpResponse, Result as AWResult};
+use serde::Deserialize;
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -11,6 +12,11 @@ async fn add_bookmark(
     request: web::Json<AddBookmarkRequest>,
     document_id: web::Path<Uuid>,
 ) -> AWResult<HttpResponse> {
+    log::info!(
+        "Adding new bookmark to page {} for document {}",
+        request.page,
+        document_id
+    );
     let bookmark_id = Uuid::new_v4();
     sqlx::query!(
         "INSERT INTO Bookmarks (id, description, page, document)
@@ -63,28 +69,41 @@ async fn get_bookmarks(
     .map(|b: Vec<Bookmark>| HttpResponse::Ok().json(b))
 }
 
+#[derive(Deserialize)]
+struct DeleteBookmarkArguments {
+    bookmark_id: Uuid,
+    document_id: Uuid,
+}
+
 async fn delete_bookmark(
     pool: web::Data<PgPool>,
-    _document_id: web::Path<Uuid>,
-    bookmark_id: web::Path<Uuid>,
+    data: web::Path<DeleteBookmarkArguments>,
 ) -> AWResult<HttpResponse> {
-    let result: PgQueryResult = sqlx::query!("DELETE FROM Bookmarks WHERE id = $1", *bookmark_id)
-        .execute(pool.as_ref())
-        .await
-        .map_err(|e| {
-            log::error!("Failed to delete bookmark {}.\n{}", bookmark_id, e);
-            error::ErrorInternalServerError("Failed to delete bookmark")
-        })?;
+    log::info!("Deleting bookmark {}", data.bookmark_id);
+    let result: PgQueryResult = sqlx::query!(
+        "DELETE FROM Bookmarks WHERE document = $1 AND id = $2",
+        data.document_id,
+        data.bookmark_id
+    )
+    .execute(pool.as_ref())
+    .await
+    .map_err(|e| {
+        log::error!("Failed to delete bookmark {}.\n{}", data.bookmark_id, e);
+        error::ErrorInternalServerError("Failed to delete bookmark")
+    })?;
 
     match result.rows_affected() {
-        0 => Ok(HttpResponse::NotFound().finish()),
+        0 => {
+            log::info!("Attempted to delete non-existant bookmark");
+            Ok(HttpResponse::NotFound().finish())
+        }
         _ => Ok(HttpResponse::NoContent().finish()),
     }
 }
 
 pub fn setup_bookmarks_service() -> Scope {
     web::scope("/documents/{document_id}/bookmarks")
+        .route("/{bookmark_id}", web::delete().to(delete_bookmark))
         .route("", web::post().to(add_bookmark))
         .route("", web::get().to(get_bookmarks))
-        .route("/{id}", web::delete().to(delete_bookmark))
 }

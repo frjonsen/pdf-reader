@@ -1,52 +1,180 @@
 {
   "db": "PostgreSQL",
+  "230b960494f4694419154e064891199ab3d303b10f8942a1bbd284541c6a1395": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "description",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "added_on",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "page",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "document",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "deleted_on",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM Bookmarks WHERE id = $1"
+  },
+  "24c119c83d7851920c4a81ce82623780f1b9f2883b4d1d5a0f6137fe8cb3cac7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "description",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "added_on",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "page",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "document",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "deleted_on",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM Bookmarks WHERE document = $1"
+  },
   "555f87fd154defc8d1dd428fe83689975b6fe013015cffbed4d40c2fbb06b77e": {
-    "query": "INSERT INTO Documents (id, name) VALUES ($1, $2)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
           "Uuid",
           "Text"
         ]
-      },
-      "nullable": []
-    }
+      }
+    },
+    "query": "INSERT INTO Documents (id, name) VALUES ($1, $2)"
   },
   "cd162816d775a9bcb0860012889ce9a929331cb4a30fe82f48bae2a8a8756760": {
-    "query": "SELECT * FROM Documents",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "id",
+          "ordinal": 0,
           "type_info": "Uuid"
         },
         {
-          "ordinal": 1,
           "name": "name",
+          "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "ordinal": 2,
           "name": "added_on",
+          "ordinal": 2,
           "type_info": "Timestamptz"
         },
         {
-          "ordinal": 3,
           "name": "current_page",
+          "ordinal": 3,
           "type_info": "Int4"
         }
       ],
-      "parameters": {
-        "Left": []
-      },
       "nullable": [
         false,
         false,
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT * FROM Documents"
+  },
+  "d4987731eeb5fa7e438c8675e2fd83b182fa84c6ea96364264727956e3565330": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "DELETE FROM Bookmarks WHERE document = $1 AND id = $2"
+  },
+  "fc6f931f1de895181ff481976fd3bd3e75b2d873199e290a6e654db975dd7a99": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Int4",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO Bookmarks (id, description, page, document)\n    VALUES ($1, $2, $3, $4)"
   }
 }

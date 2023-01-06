@@ -3,6 +3,7 @@ use std::net::TcpListener;
 use crate::configuration::Settings;
 use crate::database;
 use crate::routes::{bookmarks, documents};
+use actix_web::middleware::Logger;
 use actix_web::{dev::Server, get, web, App, HttpResponse, HttpServer, Responder};
 use sqlx::PgPool;
 pub struct Application {
@@ -25,6 +26,7 @@ pub fn run(
     println!("Starting listen on {}", listener.local_addr().unwrap());
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .service(
                 web::scope("/api")
                     .service(bookmarks::setup_bookmarks_service())
