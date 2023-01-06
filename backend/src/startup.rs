@@ -2,7 +2,7 @@ use std::net::TcpListener;
 
 use crate::configuration::Settings;
 use crate::database;
-use crate::documents;
+use crate::routes::{bookmarks, documents};
 use actix_web::{dev::Server, get, web, App, HttpResponse, HttpServer, Responder};
 use sqlx::PgPool;
 pub struct Application {
@@ -27,6 +27,7 @@ pub fn run(
         App::new()
             .service(
                 web::scope("/api")
+                    .service(bookmarks::setup_bookmarks_service())
                     .service(documents::setup_documents_service())
                     .service(health_check),
             )

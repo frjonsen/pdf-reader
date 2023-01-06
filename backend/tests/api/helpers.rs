@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use pdf_reader::configuration::{get_configuration, Settings};
 use pdf_reader::database;
+use pdf_reader::models::AddBookmarkRequest;
 use pdf_reader::startup::Application;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -13,6 +14,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
     pub config: Settings,
     pub test_id: Uuid,
+    pub client: reqwest::Client,
 }
 
 impl Drop for TestApp {
@@ -35,6 +37,33 @@ impl Drop for TestApp {
             println!("{:?}", std::str::from_utf8(&result.stderr));
             panic!("Failed to delete database after test");
         }
+    }
+}
+
+impl TestApp {
+    pub async fn post_bookmark(
+        &self,
+        document_id: Uuid,
+        page: i32,
+        description: &str,
+    ) -> reqwest::Response {
+        let body = AddBookmarkRequest {
+            description: description.to_owned(),
+            page,
+        };
+
+        let url = format!(
+            "{}/api/documents/{}/bookmarks",
+            &self.address,
+            document_id.as_hyphenated()
+        );
+        println!("Posting to {}", url);
+        self.client
+            .post(url)
+            .json(&body)
+            .send()
+            .await
+            .expect("Failed to send bookmark request")
     }
 }
 
@@ -87,5 +116,6 @@ pub async fn spawn_app() -> TestApp {
         db_pool: db,
         config: configuration,
         test_id,
+        client: reqwest::Client::new(),
     }
 }

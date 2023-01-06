@@ -198,12 +198,11 @@ async fn update_document_status(
             error::ErrorInternalServerError("Failed to make query")
         })?;
 
-    if result.rows_affected() == 0 {
-        Err(error::ErrorNotFound(
+    match result.rows_affected() {
+        0 => Err(error::ErrorNotFound(
             "Document could not be updated because it was not found",
-        ))
-    } else {
-        Ok(HttpResponse::NoContent().finish())
+        )),
+        _ => Ok(HttpResponse::NoContent().finish()),
     }
 }
 
