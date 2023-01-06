@@ -39,7 +39,7 @@ impl Drop for TestApp {
 }
 
 pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool {
-    config.database_name = Some(test_id.to_hyphenated().to_string());
+    config.database_name = Some(test_id.as_hyphenated().to_string());
 
     let options = PgConnectOptions::from_str(&config.get_database_location())
         .expect("Failed to parse connection string");
@@ -49,7 +49,7 @@ pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool
         .expect("Failed to connect to Postgres")
         .execute(&*format!(
             r#"CREATE DATABASE "{}""#,
-            test_id.to_hyphenated()
+            test_id.as_hyphenated()
         ))
         .await
         .expect("Failed to create database");
@@ -61,7 +61,7 @@ pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool
 }
 
 pub fn setup_temp_storage(test_id: &Uuid) -> PathBuf {
-    let path = std::env::temp_dir().join(test_id.to_hyphenated().to_string());
+    let path = std::env::temp_dir().join(test_id.as_hyphenated().to_string());
     std::fs::create_dir(&path).unwrap();
     path
 }

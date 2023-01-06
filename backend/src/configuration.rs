@@ -33,18 +33,14 @@ impl Settings {
 }
 
 pub fn get_configuration() -> Settings {
-    let mut settings = config::Config::default();
-    settings
+    config::Config::builder()
         .set_default("storage_location", "/pdf_reader")
-        .expect("Failed to set default for storage location");
-
-    settings
+        .expect("Failed to set storage location default")
         .set_default("port", 8080)
-        .expect("Failed to set default for port number");
-
-    settings
-        .merge(config::Environment::with_prefix("PDF_READER"))
-        .expect("Failed to merge in environment");
-
-    settings.try_into().expect("Failed to read configuration")
+        .expect("Failed to set default port")
+        .add_source(config::Environment::with_prefix("PDF_READER"))
+        .build()
+        .expect("Failed to build configuration")
+        .try_deserialize::<Settings>()
+        .expect("Failed to deserialize configuration")
 }
