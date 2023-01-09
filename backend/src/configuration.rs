@@ -13,6 +13,10 @@ impl Settings {
         self.storage_location.join("documents")
     }
 
+    pub fn documents_contents_path(&self) -> PathBuf {
+        self.storage_location.join("documents_contents")
+    }
+
     pub fn get_database_name(&self) -> String {
         self.database_name
             .clone()

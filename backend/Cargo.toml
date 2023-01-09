@@ -22,6 +22,9 @@ uuid = { version = "1.2.2", features = ["serde", "v4"] }
 tokio = { version = "1.24.0", features = ["fs"]}
 log = "0.4.17"
 env_logger = "0.10.0"
+pdfium-render = "0.7.27"
+thiserror = "1.0.38"
+anyhow = "1.0.68"
 
 [dependencies.sqlx]
 version = "0.6.2"

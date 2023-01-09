@@ -64,10 +64,15 @@ impl Application {
     }
 
     pub async fn ensure_storage_path(configuration: &Settings) {
-        let documents_path = configuration.documents_storage_path();
-        if !std::path::Path::exists(&documents_path) {
-            println!("Path {:?} did not exist. Creating it now", &documents_path);
-            tokio::fs::create_dir_all(documents_path).await.unwrap();
+        let required_paths = [
+            configuration.documents_storage_path(),
+            configuration.documents_contents_path(),
+        ];
+        for path in required_paths.into_iter() {
+            if !std::path::Path::exists(&path) {
+                println!("Path {:?} did not exist. Creating it now", &path);
+                tokio::fs::create_dir_all(path).await.unwrap();
+            }
         }
     }
 }

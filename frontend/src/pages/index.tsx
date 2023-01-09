@@ -36,7 +36,7 @@ function Main() {
   const [dualPaneMode, setDualPaneMode] = useState<boolean>(false);
   const [fitToHeight, setFitToHeight] = useState<boolean>(true);
   const [drawerMode, setDrawerMode] = useState<SubDrawer>(SubDrawer.Bookmarks);
-  const [drawerWidth, setDrawerWidth] = useState(340);
+  const [drawerWidth, setDrawerWidth] = useState(300);
 
   const _setCurrentPage = (page: number) => {
     setPreviousPage(currentPage);
