@@ -2,10 +2,14 @@ use std::net::TcpListener;
 
 use crate::configuration::Settings;
 use crate::database;
-use crate::routes::{bookmarks, documents};
+use crate::indexer::Indexer;
+use crate::routes::{bookmarks, documents, search};
 use actix_web::middleware::Logger;
 use actix_web::{dev::Server, get, web, App, HttpResponse, HttpServer, Responder};
+use once_cell::sync::Lazy;
+use pdfium_render::prelude::Pdfium;
 use sqlx::PgPool;
+
 pub struct Application {
     pub port: u16,
     pub server: Server,
@@ -16,25 +20,43 @@ async fn health_check() -> impl Responder {
     HttpResponse::Ok()
 }
 
+static PDFIUM: Lazy<Pdfium> = Lazy::new(|| {
+    log::info!("Binding pdfium");
+    let pdfium = Pdfium::new(
+        Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+            .or_else(|_| Pdfium::bind_to_system_library())
+            .unwrap(),
+    );
+    log::info!("Pdfium successfully bound");
+    pdfium
+});
+
 pub fn run(
     listener: TcpListener,
     db_pool: PgPool,
     configuration: Settings,
 ) -> Result<Server, std::io::Error> {
     let db_pool = web::Data::new(db_pool);
+    let indexer = web::Data::new(
+        Indexer::new(configuration.documents_contents_path()).expect("Failed to set up indexer"),
+    );
     let config = web::Data::new(configuration);
-    println!("Starting listen on {}", listener.local_addr().unwrap());
+    let pdfium = web::Data::new(&PDFIUM);
+    log::info!("Starting listen on {}", listener.local_addr().unwrap());
     let server = HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .service(
                 web::scope("/api")
+                    .service(search::setup_search_service())
                     .service(bookmarks::setup_bookmarks_service())
                     .service(documents::setup_documents_service())
                     .service(health_check),
             )
             .app_data(db_pool.clone())
             .app_data(config.clone())
+            .app_data(pdfium.clone())
+            .app_data(indexer.clone())
     })
     .listen(listener)?
     .run();

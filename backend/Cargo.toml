@@ -25,6 +25,12 @@ env_logger = "0.10.0"
 pdfium-render = "0.7.27"
 thiserror = "1.0.38"
 anyhow = "1.0.68"
+tantivy = "0.19.0"
+tracing = { version = "0.1.37", features = ["log"] }
+tracing-subscriber = { version = "0.3.16", features = ["registry", "env-filter"] }
+tracing-log = "0.1.3"
+tracing-bunyan-formatter = "0.3.6"
+once_cell = "1.17.0"
 
 [dependencies.sqlx]
 version = "0.6.2"
@@ -43,4 +49,5 @@ features = [
 actix-rt = "2.7.0"
 fake = "2.5.0"
 reqwest = {version = "0.11.13", features = ["multipart", "blocking", "json"]}
+tempfile = "3.3.0"
 

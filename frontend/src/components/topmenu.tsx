@@ -73,8 +73,8 @@ export default function TopMenu({
             fetchDocumentsError={fetchDocumentsError}
           />
         </Box>
-        <IconButton>
-          <Bookmark onClick={() => setSidebarContents(SubDrawer.Bookmarks)} />
+        <IconButton onClick={() => setSidebarContents(SubDrawer.Bookmarks)}>
+          <Bookmark />
         </IconButton>
         {numPages != 0 && (
           <>

@@ -3,6 +3,7 @@ use sqlx::{postgres::PgConnectOptions, ConnectOptions, PgPool};
 use std::str::FromStr;
 
 pub fn get_connection_pool(settings: &Settings) -> PgPool {
+    log::info!("Setting up connection pool");
     let connection_string = settings.get_connection_string_with_db();
     let mut options =
         PgConnectOptions::from_str(&connection_string).expect("Failed to parse database url");
@@ -12,8 +13,10 @@ pub fn get_connection_pool(settings: &Settings) -> PgPool {
 }
 
 pub async fn initialize_database(pool: &PgPool) {
+    log::info!("Migrating database");
     sqlx::migrate!()
         .run(pool)
         .await
         .expect("Failed to run migration");
+    log::info!("Migration complete");
 }

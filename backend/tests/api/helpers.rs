@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use once_cell::sync::Lazy;
+use pdf_reader::telemetry::{get_subscriber, init_subscriber};
 use std::str::FromStr;
 
 use pdf_reader::configuration::{get_configuration, Settings};
@@ -7,6 +8,7 @@ use pdf_reader::models::AddBookmarkRequest;
 use pdf_reader::startup::Application;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use tempfile::TempDir;
 use uuid::Uuid;
 
 pub struct TestApp {
@@ -65,6 +67,18 @@ impl TestApp {
             .await
             .expect("Failed to send bookmark request")
     }
+
+    pub async fn post_document(&self, form_contents: &[u8]) -> reqwest::Response {
+        let body = reqwest::multipart::Part::bytes(form_contents.to_owned()).file_name("file.pdf");
+        let form = reqwest::multipart::Form::new().part("field1", body);
+        let url = format!("{}/api/documents", &self.address);
+        self.client
+            .post(url)
+            .multipart(form)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
 }
 
 pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool {
@@ -89,17 +103,12 @@ pub async fn configure_database(config: &mut Settings, test_id: &Uuid) -> PgPool
     connection_pool
 }
 
-pub fn setup_temp_storage(test_id: &Uuid) -> PathBuf {
-    let path = std::env::temp_dir().join(test_id.as_hyphenated().to_string());
-    std::fs::create_dir(&path).unwrap();
-    path
-}
-
 pub async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
     let test_id = Uuid::new_v4();
     let mut configuration = get_configuration();
     configuration.port = 0;
-    configuration.storage_location = setup_temp_storage(&test_id);
+    configuration.storage_location = TempDir::new().unwrap().path().to_path_buf();
 
     let db = configure_database(&mut configuration, &test_id).await;
 
@@ -119,3 +128,16 @@ pub async fn spawn_app() -> TestApp {
         client: reqwest::Client::new(),
     }
 }
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+
+    if let Ok(log_level) = std::env::var("TEST_LOG") {
+        let subscriber = get_subscriber(subscriber_name, log_level, std::io::stdout);
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+        init_subscriber(subscriber);
+    }
+});

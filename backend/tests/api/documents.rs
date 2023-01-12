@@ -1,23 +1,15 @@
-use crate::helpers::spawn_app;
 use pdf_reader::models::Document;
 use std::{collections::HashMap, io::Write};
 use uuid::Uuid;
 
+use crate::api::helpers::spawn_app;
+
 #[actix_rt::test]
 async fn upload_document() {
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
-    let body = reqwest::multipart::Part::bytes("hello".as_bytes()).file_name("file.pdf");
-    let form = reqwest::multipart::Form::new().part("field1", body);
-
-    let url = format!("{}/api/documents", &app.address);
-    let response = client
-        .post(url)
-        .multipart(form)
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let pdf = include_bytes!("../../tests/test_files/pdf-sample.pdf");
+    let response = app.post_document(pdf).await;
 
     assert_eq!(response.status(), reqwest::StatusCode::CREATED);
 
@@ -37,9 +29,8 @@ async fn upload_document() {
     let expected_file_name = format!("{}.pdf", document.id);
     assert_eq!(file.file_name().to_string_lossy(), expected_file_name);
 
-    let file_contents =
-        std::fs::read_to_string(documents_location.join(expected_file_name)).unwrap();
-    assert_eq!(file_contents, "hello");
+    let file = std::fs::read(documents_location.join(expected_file_name)).unwrap();
+    assert_eq!(&file, pdf);
 }
 
 #[actix_rt::test]

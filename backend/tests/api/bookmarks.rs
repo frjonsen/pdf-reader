@@ -2,7 +2,7 @@ use fake::Fake;
 use pdf_reader::models::Bookmark;
 use uuid::Uuid;
 
-use crate::helpers::spawn_app;
+use crate::api::helpers::spawn_app;
 
 #[actix_rt::test]
 async fn add_bookmark() {
