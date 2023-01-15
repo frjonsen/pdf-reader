@@ -43,7 +43,7 @@ export default function SearchDrawer({
   }
 
   function convertHighlight(snippet: string): JSX.Element {
-    const trimmed = snippet.replace(/&#x27;/, "'");
+    const trimmed = snippet.replace(/&#x27;/g, "'");
     const parts = [];
 
     let inProgress = trimmed;
