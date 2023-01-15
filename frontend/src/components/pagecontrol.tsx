@@ -40,10 +40,10 @@ export default function PageControl({
 
   useEffect(() => {
     const handleGlobalKey = (event: KeyboardEvent) => {
-      if (event.key == "ArrowRight") {
+      if (event.key == "ArrowDown") {
         movePage(1);
       }
-      if (event.key == "ArrowLeft") {
+      if (event.key == "ArrowUp") {
         movePage(-1);
       }
     };

@@ -11,6 +11,7 @@ import Height from "@mui/icons-material/Height";
 import { styled } from "@mui/material";
 import { SubDrawer } from "./Drawer/drawer";
 import Bookmark from "@mui/icons-material/Bookmark";
+import SearchIcon from "@mui/icons-material/Search";
 
 interface TopMenuProps extends PageControlProps {
   updateDocument: (doc: string) => void;
@@ -25,7 +26,7 @@ interface TopMenuProps extends PageControlProps {
 }
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== "open",
+  shouldForwardProp: (prop) => prop !== "open" && prop !== "drawerWidth",
 })<AppBarProps & { open: boolean; drawerWidth: number }>(
   ({ theme, open, drawerWidth }) => ({
     transition: theme.transitions.create(["margin", "width"], {
@@ -75,6 +76,9 @@ export default function TopMenu({
         </Box>
         <IconButton onClick={() => setSidebarContents(SubDrawer.Bookmarks)}>
           <Bookmark />
+        </IconButton>
+        <IconButton onClick={() => setSidebarContents(SubDrawer.Search)}>
+          <SearchIcon />
         </IconButton>
         {numPages != 0 && (
           <>
